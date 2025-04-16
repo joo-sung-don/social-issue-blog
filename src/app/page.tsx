@@ -70,10 +70,10 @@ const dummyData = [
 export default function Home() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-4xl font-bold text-gray-900 mb-8">
+      <h1 className="text-4xl font-bold text-gray-900 mb-8 bg-red-500">
         최신 소셜 이슈
       </h1>
-      <div className="w-full grid grid-cols-3 gap-x-10 gap-y-8 items-stretch">
+      <div className="w-full grid grid-cols-3 gap-[80px] items-stretch">
         {dummyData.map((item) => (
           <Card key={item.id} className="h-full flex flex-col p-3">
             <Image
