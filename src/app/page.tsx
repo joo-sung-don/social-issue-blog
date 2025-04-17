@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
+import Link from "next/link";
 
 const dummyData = [
   {
@@ -69,28 +70,30 @@ const dummyData = [
 
 export default function Home() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-4xl font-bold text-gray-900 mb-8 bg-red-500">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <h1 className="text-4xl font-bold text-gray-900 mb-8">
         최신 소셜 이슈
       </h1>
-      <div className="w-full grid grid-cols-3 gap-[80px] items-stretch">
+      <div className="w-full grid grid-cols-1 min-[768px]:grid-cols-2 min-[1024px]:grid-cols-3 gap-[40px] min-[768px]:gap-[60px] min-[1024px]:gap-[80px] items-stretch">
         {dummyData.map((item) => (
-          <Card key={item.id} className="h-full flex flex-col p-3">
-            <Image
-              src={item.thumbnail}
-              alt={item.title}
-              width={400}
-              height={200}
-              className="rounded-t-lg object-cover w-full h-48"
-            />
-            <CardHeader className="p-2 pb-0">
-              <CardTitle className="text-lg leading-tight mb-1">{item.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow p-2 pt-1">
-              <p className="text-gray-600 mb-2 text-sm leading-snug">{item.description}</p>
-              <span className="text-xs text-gray-400 mt-auto block leading-tight">{item.date}</span>
-            </CardContent>
-          </Card>
+          <Link key={item.id} href={`/${item.title.toLowerCase().replace(/ /g, '-')}`} className="block">
+            <Card className="h-full flex flex-col p-3 transition-transform hover:scale-[1.02]">
+              <Image
+                src={item.thumbnail}
+                alt={item.title}
+                width={400}
+                height={200}
+                className="rounded-t-lg object-cover w-full h-48"
+              />
+              <CardHeader className="p-2 pb-0">
+                <CardTitle className="text-lg leading-tight mb-1">{item.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col flex-grow p-2 pt-1">
+                <p className="text-gray-600 mb-2 text-sm leading-snug">{item.description}</p>
+                <span className="text-xs text-gray-400 mt-auto block leading-tight">{item.date}</span>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>
