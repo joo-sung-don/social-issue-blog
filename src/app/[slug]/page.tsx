@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { issues as fallbackIssues } from '@/data/issues';
 import { use } from 'react';
+import Link from 'next/link';
 
 interface Issue {
   id: number;
@@ -103,21 +104,23 @@ export default function IssuePage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <main className="container mx-auto px-4 py-8">
-        <p>로딩 중...</p>
+      <main className="container mx-auto px-[16px] py-[32px]" style={{ maxWidth: "1100px" }}>
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <p className="text-[18px]">로딩 중...</p>
+        </div>
       </main>
     );
   }
 
   if (error) {
     return (
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto bg-red-50 p-4 rounded-lg">
-          <h1 className="text-xl font-bold text-red-700">오류가 발생했습니다</h1>
-          <p className="text-red-600">{error}</p>
-          <p className="mt-4">
-            <a href="/" className="text-blue-600 hover:underline">메인 페이지로 돌아가기</a>
-          </p>
+      <main className="container mx-auto px-[16px] py-[32px]" style={{ maxWidth: "1100px" }}>
+        <div className="max-w-[800px] mx-auto bg-red-50 p-[24px] rounded-[16px] shadow-md">
+          <h1 className="text-[24px] font-bold text-red-700 mb-[16px]">오류가 발생했습니다</h1>
+          <p className="text-red-600 mb-[16px]">{error}</p>
+          <Link href="/" className="inline-flex items-center text-blue-600 hover:underline">
+            <span>← 메인 페이지로 돌아가기</span>
+          </Link>
         </div>
       </main>
     );
@@ -131,28 +134,53 @@ export default function IssuePage({ params }: PageProps) {
   console.log('Rendering issue page for:', issue.title);
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <article className="max-w-4xl mx-auto">
-        <div className="relative w-full h-[400px] mb-8">
-          <img
-            src={issue.thumbnail}
-            alt={issue.title}
-            className="object-cover w-full h-full rounded-lg"
-          />
+    <main className="container mx-auto px-[16px] py-[32px]" style={{ maxWidth: "1100px" }}>
+      <div className="max-w-[800px] mx-auto bg-white rounded-[20px] shadow-md overflow-hidden">
+        {/* 상단 내비게이션 */}
+        <div className="p-[16px] bg-gray-50 border-b border-gray-100">
+          <Link href="/" className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-[16px] w-[16px] mr-[8px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>메인페이지로 돌아가기</span>
+          </Link>
         </div>
-        <h1 className="text-4xl font-bold mb-4">{issue.title}</h1>
-        <p className="text-gray-500 mb-8">{issue.date}</p>
-        <div className="prose prose-lg max-w-none">
-          {issue.content?.split('\n').map((paragraph, index) => (
-            <p key={index} className="mb-4">
-              {paragraph.trim()}
-            </p>
-          ))}
+        
+        {/* 이미지 영역 */}
+        <div className="relative w-full overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100">
+          <div className="relative w-full h-[400px]">
+            <img
+              src={issue.thumbnail}
+              alt={issue.title}
+              className="object-cover w-full h-full"
+            />
+          </div>
         </div>
-        <div className="mt-8">
-          <a href="/" className="text-blue-600 hover:underline">← 메인 페이지로 돌아가기</a>
+        
+        {/* 콘텐츠 영역 */}
+        <div className="p-[32px]">
+          <h1 className="text-[32px] font-[700] mb-[16px] text-gray-800">{issue.title}</h1>
+          <p className="text-[14px] text-gray-500 mb-[32px] pb-[16px] border-b border-gray-100">{issue.date}</p>
+          
+          <div className="prose prose-lg max-w-none">
+            {issue.content?.split('\n').map((paragraph, index) => (
+              <p key={index} className="mb-[24px] text-[16px] leading-[1.8] text-gray-700">
+                {paragraph.trim()}
+              </p>
+            ))}
+          </div>
+          
+          {/* 하단 내비게이션 */}
+          <div className="mt-[40px] pt-[24px] border-t border-gray-100">
+            <Link href="/" className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-[16px] w-[16px] mr-[8px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>메인페이지로 돌아가기</span>
+            </Link>
+          </div>
         </div>
-      </article>
+      </div>
     </main>
   );
 } 
