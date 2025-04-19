@@ -1,6 +1,18 @@
-import { issues } from "@/data/issues";
-import { notFound } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from 'react';
+import { notFound } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
+
+interface Issue {
+  id: number;
+  title: string;
+  description: string;
+  thumbnail: string;
+  date: string;
+  content: string;
+}
 
 interface PageProps {
   params: {
@@ -9,10 +21,46 @@ interface PageProps {
 }
 
 export default function IssuePage({ params }: PageProps) {
-  const issue = issues.find((issue) => issue.slug === params.slug);
+  const [issue, setIssue] = useState<Issue | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchIssue() {
+      try {
+        const { data, error } = await supabase
+          .from('issues')
+          .select('*')
+          .eq('slug', params.slug)
+          .single();
+
+        if (error) {
+          if (error.code === 'PGRST116') {
+            return notFound();
+          }
+          throw error;
+        }
+
+        setIssue(data);
+      } catch (error) {
+        console.error('Error fetching issue:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchIssue();
+  }, [params.slug]);
+
+  if (loading) {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <p>로딩 중...</p>
+      </main>
+    );
+  }
 
   if (!issue) {
-    notFound();
+    return notFound();
   }
 
   return (
