@@ -7,7 +7,7 @@ export default function Header() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-xl font-bold text-primary">
+              <Link href="/" className="text-xl font-bold text-blue-600">
                 Social Issue Blog
               </Link>
             </div>
@@ -15,7 +15,7 @@ export default function Header() {
           <div className="flex items-center">
             <Link
               href="/admin"
-              className="ml-4 px-4 py-2 rounded-md text-sm font-medium text-white bg-primary hover:bg-primary/90"
+              className="ml-4 px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
             >
               관리자
             </Link>

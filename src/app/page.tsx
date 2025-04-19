@@ -82,7 +82,7 @@ export default function Home() {
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[24px]">
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-[30px]">
         {issues.length > 0 ? (
           issues.map((issue) => (
             <Link 
@@ -95,8 +95,8 @@ export default function Home() {
               className="block"
             >
               <Card className="h-full flex flex-col overflow-hidden hover:shadow-lg transition-shadow hover:translate-y-[-3px] duration-[300ms] rounded-[20px]">
-                <div className="p-[16px] pt-[20px] bg-blue-50">
-                  <h3 className="text-[18px] font-[600] mb-[10px] line-clamp-1 text-gray-800 text-center">
+                <div className="p-[16px] pt-[20px] bg-blue-600">
+                  <h3 className="text-xl font-bold mb-2 line-clamp-1 text-white text-center">
                     {issue.title}
                   </h3>
                 </div>
@@ -105,7 +105,7 @@ export default function Home() {
                   <div className="relative z-10 w-[80%] h-[80%] overflow-hidden rounded-[16px] shadow-md transform hover:scale-105 transition-transform duration-300">
                     <img
                       src={issue.thumbnail}
-                      alt={issue.title}
+                      
                       className="w-full h-full object-cover"
                     />
                   </div>
