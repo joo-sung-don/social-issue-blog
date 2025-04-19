@@ -59,7 +59,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-[16px] py-[32px]">
         <p>로딩 중...</p>
       </main>
     );
@@ -73,16 +73,16 @@ export default function Home() {
   console.log('Available slugs:', issues.map(issue => issue.slug));
 
   return (
-    <main className="container mx-auto px-4 py-8" style={{ maxWidth: "1100px" }}>
+    <main className="container mx-auto px-[16px] py-[32px]" style={{ maxWidth: "1100px" }}>
       {error && (
-        <div className="mb-4 p-4 bg-yellow-50 rounded-lg">
+        <div className="mb-[16px] p-[16px] bg-yellow-50 rounded-[8px]">
           <p className="text-yellow-700">
             데이터베이스 연결 중 오류가 발생했습니다. 샘플 데이터를 표시합니다.
           </p>
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[80px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[24px]">
         {issues.length > 0 ? (
           issues.map((issue) => (
             <Link 
@@ -94,32 +94,27 @@ export default function Home() {
               prefetch={false}
               className="block"
             >
-              <Card className="h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow hover:translate-y-[-3px] duration-300">
-                <div className="relative w-full overflow-hidden" style={{ height: "230px" }}>
-                  <div className="absolute inset-0 bg-gradient-to-tr from-gray-100 to-gray-50"></div>
-                  <div className="absolute inset-0 flex items-center justify-center p-5">
+              <Card className="h-full flex flex-col overflow-hidden hover:shadow-lg transition-shadow hover:translate-y-[-3px] duration-[300ms] rounded-[20px]">
+                <div className="p-[20px] pt-[16px] pb-[8px] bg-white rounded-t-[20px]">
+                  <h3 className="text-[18px] font-[600] mb-[4px] line-clamp-1 text-gray-800 text-center">
+                    {issue.title}
+                  </h3>
+                </div>
+                <div className="relative w-full h-[400px] overflow-hidden flex items-center justify-center p-[16px]">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100"></div>
+                  <div className="relative z-10 w-[80%] h-[80%] overflow-hidden rounded-[16px] shadow-md transform hover:scale-105 transition-transform duration-300">
                     <img
                       src={issue.thumbnail}
                       alt={issue.title}
-                      style={{ 
-                        maxWidth: "90%", 
-                        maxHeight: "90%",
-                        objectFit: "contain",
-                        filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))",
-                        borderRadius: "6px",
-                        transition: "transform 0.3s ease"
-                      }}
+                      className="w-full h-full object-cover"
                     />
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="text-base font-medium mb-2 line-clamp-1">
-                    {issue.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2" style={{ maxHeight: "40px" }}>
+                <div className="p-[20px] pt-[12px] bg-white rounded-b-[20px]">
+                  <p className="text-[14px] text-gray-600 mb-[16px] line-clamp-2" style={{ maxHeight: "42px" }}>
                     {issue.description}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-[12px] text-gray-500 pt-[8px] border-t border-gray-100">
                     {issue.date}
                   </p>
                 </div>
@@ -127,7 +122,7 @@ export default function Home() {
             </Link>
           ))
         ) : (
-          <p className="col-span-3 text-center py-8">게시글이 없습니다.</p>
+          <p className="col-span-3 text-center py-[32px]">게시글이 없습니다.</p>
         )}
       </div>
     </main>
