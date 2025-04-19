@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import Image from 'next/image';
+import { issues as fallbackIssues } from '@/data/issues';
+import { use } from 'react';
 
 interface Issue {
   id: number;
@@ -12,6 +13,7 @@ interface Issue {
   thumbnail: string;
   date: string;
   content: string;
+  slug: string;
 }
 
 interface PageProps {
@@ -21,35 +23,83 @@ interface PageProps {
 }
 
 export default function IssuePage({ params }: PageProps) {
+  // params를 React.use()로 unwrap
+  const unwrappedParams = use(params as any) as { slug: string };
+  // URL 디코딩을 추가
+  const slug = decodeURIComponent(unwrappedParams.slug);
+
   const [issue, setIssue] = useState<Issue | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 디버깅용 로그
+  console.log("상세 페이지 컴포넌트 렌더링");
+  console.log("원본 slug 파라미터:", unwrappedParams.slug);
+  console.log("디코딩된 slug 파라미터:", slug);
+  console.log("폴백 데이터의 slugs:", fallbackIssues.map(i => i.slug));
 
   useEffect(() => {
     async function fetchIssue() {
       try {
+        console.log('Fetching issue with slug:', slug); // 디버깅용
+
+        // 폴백 데이터에서 먼저 확인 - 디버깅용
+        const localIssue = fallbackIssues.find(i => i.slug === slug);
+        console.log('Local issue match:', localIssue ? "found" : "not found");
+
+        // Supabase에서 데이터 가져오기
         const { data, error } = await supabase
           .from('issues')
           .select('*')
-          .eq('slug', params.slug)
-          .single();
+          .eq('slug', slug)
+          .limit(1);
+
+        console.log('Supabase response:', { data, error });
 
         if (error) {
-          if (error.code === 'PGRST116') {
-            return notFound();
+          console.error('Supabase error:', error);
+          setError(error.message);
+          
+          // 폴백: 로컬 데이터에서 검색
+          console.log('Falling back to local data');
+          if (localIssue) {
+            console.log('Found issue in local data');
+            setIssue(localIssue as Issue);
+          } else {
+            console.log('Issue not found in local data');
           }
-          throw error;
+        } else if (data && data.length > 0) {
+          console.log('Issue found in Supabase:', data[0]);
+          setIssue(data[0]);
+        } else {
+          console.log('No data returned from Supabase');
+          // 폴백: 로컬 데이터에서 검색
+          console.log('Trying local data');
+          if (localIssue) {
+            console.log('Found issue in local data');
+            setIssue(localIssue as Issue);
+          } else {
+            console.log('No issue found with slug:', slug);
+            // 슬러그 대소문자 무시하고 검색 시도
+            const caseInsensitiveMatch = fallbackIssues.find(
+              i => i.slug.toLowerCase() === slug.toLowerCase()
+            );
+            if (caseInsensitiveMatch) {
+              console.log('Found case-insensitive match in fallback data');
+              setIssue(caseInsensitiveMatch as Issue);
+            }
+          }
         }
-
-        setIssue(data);
-      } catch (error) {
-        console.error('Error fetching issue:', error);
+      } catch (error: any) {
+        console.error('Fetch error:', error);
+        setError(error.message);
       } finally {
         setLoading(false);
       }
     }
 
     fetchIssue();
-  }, [params.slug]);
+  }, [slug]);
 
   if (loading) {
     return (
@@ -59,9 +109,26 @@ export default function IssuePage({ params }: PageProps) {
     );
   }
 
+  if (error) {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto bg-red-50 p-4 rounded-lg">
+          <h1 className="text-xl font-bold text-red-700">오류가 발생했습니다</h1>
+          <p className="text-red-600">{error}</p>
+          <p className="mt-4">
+            <a href="/" className="text-blue-600 hover:underline">메인 페이지로 돌아가기</a>
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   if (!issue) {
+    console.log('No issue found, returning 404');
     return notFound();
   }
+
+  console.log('Rendering issue page for:', issue.title);
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -81,6 +148,9 @@ export default function IssuePage({ params }: PageProps) {
               {paragraph.trim()}
             </p>
           ))}
+        </div>
+        <div className="mt-8">
+          <a href="/" className="text-blue-600 hover:underline">← 메인 페이지로 돌아가기</a>
         </div>
       </article>
     </main>

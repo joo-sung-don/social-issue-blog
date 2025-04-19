@@ -1,3 +1,74 @@
+# Social Issue Blog
+
+Next.js, Tailwind CSS, Supabase로 구현한 소셜 이슈 블로그
+
+## 기능
+
+- 소셜 이슈 목록 보기
+- 상세 페이지
+- 관리자 기능 (게시글 작성, 수정, 삭제)
+- 이미지 업로드
+
+## 설치 및 실행
+
+```bash
+# 패키지 설치
+npm install
+
+# 개발 서버 실행
+npm run dev
+```
+
+## Supabase 설정
+
+### 1. 데이터베이스 테이블 생성
+
+```sql
+CREATE TABLE issues (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  thumbnail TEXT NOT NULL,
+  content TEXT,
+  date TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+```
+
+### 2. Storage 설정 (이미지 업로드용)
+
+1. Supabase 대시보드에서 Storage 메뉴로 이동
+2. "Create new bucket" 버튼 클릭
+3. 버킷 설정:
+   - Name: `issue-images`
+   - Public bucket 체크 (공개 액세스 허용)
+   - 버킷 생성 완료
+4. RLS(Row Level Security) 정책 설정:
+   - 생성된 버킷 선택 후 "Policies" 탭 클릭
+   - "Add policies" 버튼 클릭
+   - 다음 정책 추가:
+     - 파일 읽기: 모든 사용자가 읽을 수 있도록 설정
+     - 파일 업로드: 인증된 사용자만 업로드 가능하게 설정
+
+### 3. 환경 변수 설정
+
+`.env.local` 파일에 Supabase URL과 anon key 설정:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+## 파일 업로드 사용 방법
+
+관리자 페이지의 게시글 작성/수정 화면에서:
+
+1. "클릭하여 이미지 업로드" 영역을 클릭하거나 파일을 드래그하여 이미지 업로드
+2. 또는 이미지 URL을 직접 입력
+3. 업로드된 이미지는 자동으로 미리보기에 표시됨
+4. 게시글 저장 시 업로드된 이미지의 URL이 함께 저장됨
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
