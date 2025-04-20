@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { issues as fallbackIssues } from '@/data/issues';
 import { use } from 'react';
+import IssueChat from '@/components/IssueChat';
 
 interface Issue {
   id: number;
@@ -149,9 +150,12 @@ export default function IssuePage({ params }: PageProps) {
             </p>
           ))}
         </div>
-        <div className="mt-8">
+        <div className="mt-8 mb-12">
           <a href="/" className="text-blue-600 hover:underline">← 메인 페이지로 돌아가기</a>
         </div>
+        
+        {/* 실시간 채팅 섹션 */}
+        <IssueChat issueSlug={slug} />
       </article>
     </main>
   );

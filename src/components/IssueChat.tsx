@@ -1,0 +1,458 @@
+"use client";
+
+import { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { Card, CardContent } from './ui/card';
+import { Alert, AlertDescription } from './ui/alert';
+import { InfoCircledIcon } from '@radix-ui/react-icons';
+
+interface ChatMessage {
+  id: string;
+  issue_slug: string;
+  sender_name: string;
+  message: string;
+  created_at: string;
+  is_system_message?: boolean;
+}
+
+interface IssueChatProps {
+  issueSlug: string;
+}
+
+// 채팅 제한 관련 상수
+const MAX_MESSAGES_PER_MINUTE = 10; // 1분당 최대 메시지 수
+const SAME_MESSAGE_COOLDOWN = 30; // 초 단위, 같은 메시지 재전송 쿨다운
+const FLOOD_BAN_DURATION = 120; // 초 단위, 도배 시 차단 시간
+const MIN_MESSAGE_INTERVAL = 1; // 초 단위, 연속 메시지 사이 최소 간격
+
+// 스팸 메시지 패턴 정규식
+const SPAM_PATTERN = /(viagra|casino|lottery|\$\$\$|make money|www\.|http:|https:)/i;
+
+export default function IssueChat({ issueSlug }: IssueChatProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [senderName, setSenderName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ipAddress, setIpAddress] = useState<string | null>(null);
+  
+  // 채팅 제한 상태
+  const [isChatBanned, setIsChatBanned] = useState(false);
+  const [banEndTime, setBanEndTime] = useState<Date | null>(null);
+  const [remainingBanTime, setRemainingBanTime] = useState(0);
+  const [recentMessages, setRecentMessages] = useState<Date[]>([]);
+  const [lastSentMessages, setLastSentMessages] = useState<{message: string, time: Date}[]>([]);
+  const [showRules, setShowRules] = useState(false);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // IP 주소 가져오기
+  useEffect(() => {
+    const getIP = async () => {
+      try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        setIpAddress(data.ip);
+      } catch (error) {
+        console.error('IP 주소를 가져오는 데 실패했습니다:', error);
+        // 실패 시 임시 IP 할당 (실제 구현에서는 다른 방식 고려)
+        setIpAddress('unknown');
+      }
+    };
+    
+    getIP();
+  }, []);
+
+  // 채팅 차단 시간 카운트다운
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    
+    if (isChatBanned && banEndTime) {
+      timer = setInterval(() => {
+        const now = new Date();
+        const remainingSeconds = Math.max(0, Math.floor((banEndTime.getTime() - now.getTime()) / 1000));
+        
+        setRemainingBanTime(remainingSeconds);
+        
+        if (remainingSeconds === 0) {
+          setIsChatBanned(false);
+          setBanEndTime(null);
+          clearInterval(timer);
+          
+          // 차단 해제 시스템 메시지 추가
+          const unbanMessage: ChatMessage = {
+            id: `system-${Date.now()}`,
+            issue_slug: issueSlug,
+            sender_name: 'System',
+            message: '채팅 차단이 해제되었습니다. 채팅 규칙을 준수해 주세요.',
+            created_at: new Date().toISOString(),
+            is_system_message: true
+          };
+          
+          setMessages(prev => [...prev, unbanMessage]);
+        }
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isChatBanned, banEndTime, issueSlug]);
+
+  // 채팅 차단 함수
+  const banChat = (duration: number, reason: string) => {
+    const endTime = new Date();
+    endTime.setSeconds(endTime.getSeconds() + duration);
+    
+    setIsChatBanned(true);
+    setBanEndTime(endTime);
+    setRemainingBanTime(duration);
+    
+    // 시스템 메시지 추가
+    const banMessage: ChatMessage = {
+      id: `system-${Date.now()}`,
+      issue_slug: issueSlug,
+      sender_name: 'System',
+      message: `${reason} 때문에 ${duration}초 동안 채팅이 제한됩니다.`,
+      created_at: new Date().toISOString(),
+      is_system_message: true
+    };
+    
+    setMessages(prev => [...prev, banMessage]);
+  };
+
+  // 스팸 검사 함수
+  const checkForSpam = (message: string): boolean => {
+    return SPAM_PATTERN.test(message);
+  };
+
+  // 채팅 규칙 위반 검사
+  const checkForChatViolation = (message: string): { isValid: boolean; reason: string } => {
+    // 이미 차단 중인 경우
+    if (isChatBanned) {
+      return { 
+        isValid: false, 
+        reason: `채팅 차단 중입니다. ${remainingBanTime}초 후에 다시 시도해 주세요.` 
+      };
+    }
+    
+    // 메시지가 비어있는 경우
+    if (!message.trim()) {
+      return { isValid: false, reason: '메시지를 입력해 주세요.' };
+    }
+    
+    // 스팸 패턴 검사
+    if (checkForSpam(message)) {
+      banChat(FLOOD_BAN_DURATION, '스팸 메시지 감지');
+      return { 
+        isValid: false, 
+        reason: '스팸으로 의심되는 내용이 포함되어 있습니다.' 
+      };
+    }
+    
+    const now = new Date();
+    
+    // 너무 빠른 연속 메시지 검사
+    if (recentMessages.length > 0) {
+      const lastMessageTime = recentMessages[recentMessages.length - 1];
+      const secondsSinceLastMessage = (now.getTime() - lastMessageTime.getTime()) / 1000;
+      
+      if (secondsSinceLastMessage < MIN_MESSAGE_INTERVAL) {
+        return { 
+          isValid: false, 
+          reason: '메시지를 너무 빠르게 보내고 있습니다. 잠시 후 다시 시도해 주세요.' 
+        };
+      }
+    }
+    
+    // 1분 내 메시지 수 제한
+    const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
+    const recentMessageCount = recentMessages.filter(time => time > oneMinuteAgo).length;
+    
+    if (recentMessageCount >= MAX_MESSAGES_PER_MINUTE) {
+      banChat(FLOOD_BAN_DURATION, '도배 감지');
+      return { 
+        isValid: false, 
+        reason: '도배가 감지되었습니다. 잠시 후에 다시 시도해 주세요.' 
+      };
+    }
+    
+    // 동일 메시지 재전송 검사
+    const recentDuplicates = lastSentMessages.filter(
+      item => item.message === message && 
+      (now.getTime() - item.time.getTime()) / 1000 < SAME_MESSAGE_COOLDOWN
+    );
+    
+    if (recentDuplicates.length > 0) {
+      return { 
+        isValid: false, 
+        reason: `동일한 메시지를 ${SAME_MESSAGE_COOLDOWN}초 이내에 반복할 수 없습니다.` 
+      };
+    }
+    
+    return { isValid: true, reason: '' };
+  };
+
+  // 메시지 불러오기
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('issue_slug', issueSlug)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching messages:', error);
+          return;
+        }
+
+        setMessages(data || []);
+      } catch (err) {
+        console.error('Failed to fetch messages:', err);
+      }
+    };
+
+    fetchMessages();
+
+    // 실시간 구독 - 채널 이름에 issueSlug 포함시켜 구체적으로 설정
+    const channelName = `chat_messages_${issueSlug}`;
+    const channel: RealtimeChannel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `issue_slug=eq.${issueSlug}`
+        },
+        (payload: RealtimePostgresChangesPayload<{
+          id: string;
+          issue_slug: string;
+          sender_name: string;
+          message: string;
+          created_at: string;
+          is_system_message?: boolean;
+          ip_address?: string;
+        }>) => {
+          console.log('Real-time message received:', payload);
+          const newMessage = payload.new as ChatMessage;
+          setMessages((prev) => [...prev, newMessage]);
+        }
+      )
+      .subscribe((status: string) => {
+        console.log(`Subscription status for ${channelName}:`, status);
+      });
+
+    return () => {
+      console.log(`Unsubscribing from channel: ${channelName}`);
+      supabase.removeChannel(channel);
+    };
+  }, [issueSlug]);
+
+  // 스크롤 자동 이동
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // 로컬 스토리지에서 발신자 이름 불러오기
+  useEffect(() => {
+    const storedName = localStorage.getItem('chat-sender-name');
+    if (storedName) {
+      setSenderName(storedName);
+    }
+  }, []);
+
+  // 메시지 전송 처리
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!senderName.trim()) {
+      setError('닉네임을 입력해 주세요.');
+      return;
+    }
+    
+    // 채팅 규칙 위반 검사
+    const validation = checkForChatViolation(newMessage);
+    if (!validation.isValid) {
+      setError(validation.reason);
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // 로컬 스토리지에 발신자 이름 저장
+      localStorage.setItem('chat-sender-name', senderName);
+      
+      // 메시지 전송 기록 업데이트
+      const now = new Date();
+      setRecentMessages(prev => [...prev, now]);
+      setLastSentMessages(prev => [...prev, { message: newMessage, time: now }]);
+      
+      // Supabase에 메시지 저장
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert([
+          {
+            issue_slug: issueSlug,
+            sender_name: senderName,
+            message: newMessage,
+            ip_address: ipAddress // IP 주소 추가
+          }
+        ])
+        .select();
+
+      if (error) {
+        console.error('Error sending message:', error);
+        
+        // 서버 측 오류 메시지 처리
+        if (error.message.includes('도배 감지')) {
+          banChat(FLOOD_BAN_DURATION, '서버에서 도배가 감지됨');
+        } else if (error.message.includes('같은 메시지')) {
+          setError('같은 메시지를 너무 자주 보내고 있습니다.');
+        } else if (error.message.includes('차단된 IP')) {
+          banChat(FLOOD_BAN_DURATION, 'IP 주소가 차단됨');
+        } else if (error.message.includes('스팸 메시지')) {
+          banChat(FLOOD_BAN_DURATION, '스팸 메시지 감지');
+        } else {
+          setError(error.message || '메시지 전송 중 오류가 발생했습니다.');
+        }
+        
+        return;
+      }
+
+      // 실시간 이벤트 전에 UI 업데이트를 위해 직접 추가
+      if (data && data.length > 0) {
+        setMessages((prev) => [...prev, data[0] as ChatMessage]);
+      }
+
+      setNewMessage('');
+    } catch (err) {
+      console.error('Error in sending message:', err);
+      setError('메시지 전송 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-4xl mx-auto p-4 bg-white rounded-lg shadow-md">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">실시간 채팅</h2>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setShowRules(!showRules)}
+        >
+          <InfoCircledIcon className="mr-1" /> 채팅 규칙
+        </Button>
+      </div>
+      
+      {showRules && (
+        <Alert className="mb-4 bg-blue-50">
+          <AlertDescription>
+            <h3 className="font-semibold mb-1">채팅 규칙:</h3>
+            <ul className="list-disc list-inside text-sm">
+              <li>1분당 최대 {MAX_MESSAGES_PER_MINUTE}개 메시지 제한</li>
+              <li>같은 메시지는 {SAME_MESSAGE_COOLDOWN}초 후에 재전송 가능</li>
+              <li>도배 시 {FLOOD_BAN_DURATION}초 동안 채팅 차단</li>
+              <li>스팸/홍보성 메시지는 금지됩니다</li>
+              <li>욕설, 비방, 차별적 발언은 금지됩니다</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="h-96 overflow-y-auto mb-4 p-4 border rounded-lg bg-gray-50">
+        {messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            아직 메시지가 없습니다. 첫 메시지를 보내보세요!
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`mb-3 ${
+                msg.is_system_message ? 'bg-yellow-50 p-2 rounded text-center text-sm' : ''
+              }`}
+            >
+              {!msg.is_system_message ? (
+                <div className="flex items-start">
+                  <Avatar className="h-8 w-8 mr-2">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {msg.sender_name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="flex items-baseline">
+                      <span className="font-semibold text-sm mr-2">{msg.sender_name}</span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(msg.created_at).toLocaleTimeString()}
+                      </span>
+                    </div>
+                    <p className="text-sm">{msg.message}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-orange-700">{msg.message}</div>
+              )}
+            </div>
+          ))
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {error && (
+        <Alert className="mb-4 bg-red-50">
+          <AlertDescription className="text-red-600">{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {isChatBanned ? (
+        <Card className="mb-4 border-red-300 bg-red-50">
+          <CardContent className="p-4">
+            <p className="text-red-600 font-medium mb-2">채팅이 제한되었습니다</p>
+            <p className="text-sm">
+              남은 시간: {Math.floor(remainingBanTime / 60)}분 {remainingBanTime % 60}초
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <form onSubmit={handleSendMessage} className="space-y-4">
+          {!senderName && (
+            <Input
+              type="text"
+              placeholder="닉네임을 입력하세요"
+              value={senderName}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSenderName(e.target.value)}
+              className="w-full"
+              maxLength={20}
+            />
+          )}
+          <div className="flex space-x-2">
+            <Input
+              type="text"
+              placeholder="메시지를 입력하세요"
+              value={newMessage}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMessage(e.target.value)}
+              className="flex-grow"
+              disabled={isLoading || !senderName}
+              maxLength={300}
+            />
+            <Button type="submit" disabled={isLoading || !senderName || !newMessage.trim()}>
+              {isLoading ? '전송 중...' : '전송'}
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+} 

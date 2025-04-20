@@ -15,4 +15,11 @@ try {
 
 console.log('Supabase URL:', validUrl); // 디버깅용
 
-export const supabase = createClient(validUrl, supabaseAnonKey); 
+// 실시간 기능 활성화 옵션 추가
+export const supabase = createClient(validUrl, supabaseAnonKey, {
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  }
+}); 
