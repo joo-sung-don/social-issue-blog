@@ -344,23 +344,25 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 bg-white rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">실시간 채팅</h2>
+    <div className="w-full max-w-4xl mx-auto p-6 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-gray-100 dark:border-zinc-800">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">실시간 토론</h2>
         <Button 
           variant="ghost" 
-          size="sm" 
+          size="sm"
+          className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-all"
           onClick={() => setShowRules(!showRules)}
         >
-          <InfoCircledIcon className="mr-1" /> 채팅 규칙
+          <InfoCircledIcon className="h-4 w-4" /> 
+          <span className="text-sm font-medium">채팅 규칙</span>
         </Button>
       </div>
       
       {showRules && (
-        <Alert className="mb-4 bg-blue-50">
+        <Alert className="mb-6 bg-indigo-50 dark:bg-indigo-950/30 border-indigo-100 dark:border-indigo-900 text-indigo-800 dark:text-indigo-300">
           <AlertDescription>
-            <h3 className="font-semibold mb-1">채팅 규칙:</h3>
-            <ul className="list-disc list-inside text-sm">
+            <h3 className="font-semibold mb-2 text-indigo-900 dark:text-indigo-200">채팅 규칙</h3>
+            <ul className="list-disc list-inside text-sm space-y-1">
               <li>1분당 최대 {MAX_MESSAGES_PER_MINUTE}개 메시지 제한</li>
               <li>같은 메시지는 {SAME_MESSAGE_COOLDOWN}초 후에 재전송 가능</li>
               <li>도배 시 {FLOOD_BAN_DURATION}초 동안 채팅 차단</li>
@@ -371,56 +373,70 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
         </Alert>
       )}
       
-      <div className="h-96 overflow-y-auto mb-4 p-4 border rounded-lg bg-gray-50">
+      <div className="h-96 overflow-y-auto mb-6 p-4 border rounded-xl bg-gray-50 dark:bg-zinc-950 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-zinc-700">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            아직 메시지가 없습니다. 첫 메시지를 보내보세요!
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500 space-y-3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <p className="text-center">아직 메시지가 없습니다. 첫 메시지를 보내보세요!</p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`mb-3 ${
-                msg.is_system_message ? 'bg-yellow-50 p-2 rounded text-center text-sm' : ''
-              }`}
-            >
-              {!msg.is_system_message ? (
-                <div className="flex items-start">
-                  <Avatar className="h-8 w-8 mr-2">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {msg.sender_name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="flex items-baseline">
-                      <span className="font-semibold text-sm mr-2">{msg.sender_name}</span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(msg.created_at).toLocaleTimeString()}
-                      </span>
+          <div className="space-y-4">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`${
+                  msg.is_system_message 
+                    ? 'bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-lg text-center' 
+                    : 'animate-fadeIn'
+                }`}
+              >
+                {!msg.is_system_message ? (
+                  <div className="flex items-start group">
+                    <div className="relative">
+                      <Avatar className="h-9 w-9 mr-3 border-2 border-white dark:border-zinc-800 shadow-sm">
+                        <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-medium">
+                          {msg.sender_name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
                     </div>
-                    <p className="text-sm">{msg.message}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline">
+                        <span className="font-semibold text-sm mr-2 text-gray-900 dark:text-gray-100">{msg.sender_name}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500 group-hover:opacity-100 opacity-70 transition-opacity">
+                          {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </span>
+                      </div>
+                      <p className="text-sm mt-1 text-gray-800 dark:text-gray-200 break-words">{msg.message}</p>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-orange-700">{msg.message}</div>
-              )}
-            </div>
-          ))
+                ) : (
+                  <div className="text-amber-700 dark:text-amber-400 text-sm font-medium py-1">{msg.message}</div>
+                )}
+              </div>
+            ))}
+          </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
       {error && (
-        <Alert className="mb-4 bg-red-50">
-          <AlertDescription className="text-red-600">{error}</AlertDescription>
+        <Alert className="mb-4 bg-red-50 dark:bg-red-950/30 border-red-100 dark:border-red-900">
+          <AlertDescription className="text-red-600 dark:text-red-400">{error}</AlertDescription>
         </Alert>
       )}
 
       {isChatBanned ? (
-        <Card className="mb-4 border-red-300 bg-red-50">
+        <Card className="mb-4 border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30">
           <CardContent className="p-4">
-            <p className="text-red-600 font-medium mb-2">채팅이 제한되었습니다</p>
-            <p className="text-sm">
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+              </svg>
+              <p className="text-red-600 dark:text-red-400 font-medium">채팅이 제한되었습니다</p>
+            </div>
+            <p className="text-sm mt-2 text-red-500 dark:text-red-400">
               남은 시간: {Math.floor(remainingBanTime / 60)}분 {remainingBanTime % 60}초
             </p>
           </CardContent>
@@ -428,27 +444,47 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
       ) : (
         <form onSubmit={handleSendMessage} className="space-y-4">
           {!senderName && (
-            <Input
-              type="text"
-              placeholder="닉네임을 입력하세요"
-              value={senderName}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSenderName(e.target.value)}
-              className="w-full"
-              maxLength={20}
-            />
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="닉네임을 입력하세요"
+                value={senderName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSenderName(e.target.value)}
+                className="w-full pl-10 h-11 bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                maxLength={20}
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
           )}
-          <div className="flex space-x-2">
-            <Input
-              type="text"
-              placeholder="메시지를 입력하세요"
-              value={newMessage}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMessage(e.target.value)}
-              className="flex-grow"
-              disabled={isLoading || !senderName}
-              maxLength={300}
-            />
-            <Button type="submit" disabled={isLoading || !senderName || !newMessage.trim()}>
-              {isLoading ? '전송 중...' : '전송'}
+          <div className="flex space-x-2 relative">
+            <div className="relative flex-1">
+              <Input
+                type="text"
+                placeholder="메시지를 입력하세요"
+                value={newMessage}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMessage(e.target.value)}
+                className="w-full pl-4 pr-10 h-12 bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                disabled={isLoading || !senderName}
+                maxLength={300}
+              />
+            </div>
+            <Button 
+              type="submit" 
+              disabled={isLoading || !senderName || !newMessage.trim()}
+              className="h-12 px-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-indigo-500 disabled:hover:to-purple-600"
+            >
+              {isLoading ? (
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <span>전송</span>
+              )}
             </Button>
           </div>
         </form>
