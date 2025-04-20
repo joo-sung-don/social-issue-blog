@@ -6,6 +6,7 @@ export interface Issue {
   date: string;
   content?: string;
   slug: string;
+  category?: string;
 }
 
 export const issues: Issue[] = [
@@ -16,6 +17,7 @@ export const issues: Issue[] = [
     thumbnail: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
     date: "2024년 4월 15일",
     slug: "environmental-pollution",
+    category: "environment",
     content: `
       환경 오염은 현대 사회가 직면한 가장 심각한 문제 중 하나입니다. 특히 플라스틱 사용량이 급증하면서 발생하는 환경 문제는 더욱 심각해지고 있습니다.
 
@@ -35,6 +37,7 @@ export const issues: Issue[] = [
     thumbnail: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80",
     date: "2024년 4월 14일",
     slug: "youth-unemployment",
+    category: "society",
     content: `
       청년 실업 문제는 현대 사회의 중요한 과제입니다. 고용 시장의 구조적 변화와 경제 불황으로 인해 청년들의 취업이 더욱 어려워지고 있습니다.
 
@@ -54,6 +57,7 @@ export const issues: Issue[] = [
     thumbnail: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1200&q=80",
     date: "2024년 4월 13일",
     slug: "ai-ethics",
+    category: "technology",
     content: `
       인공지능 기술의 급속한 발전으로 인해 다양한 윤리적 문제가 제기되고 있습니다. 
 

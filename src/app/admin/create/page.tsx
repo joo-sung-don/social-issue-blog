@@ -6,6 +6,15 @@ import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import { resizeImage, compressImageIfNeeded } from '@/lib/imageUtils';
 
+// 카테고리 한글 이름 맵핑
+const categoryNames: Record<string, string> = {
+  'economics': '경제',
+  'technology': '기술',
+  'environment': '환경',
+  'society': '사회',
+  'politics': '정치'
+};
+
 export default function CreateIssue() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -17,9 +26,10 @@ export default function CreateIssue() {
     description: '',
     thumbnail: '',
     content: '',
+    category: 'society', // 기본 카테고리
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -101,6 +111,8 @@ export default function CreateIssue() {
             content: formData.content,
             date: date,
             slug: slug,
+            category: formData.category,
+            created_at: new Date().toISOString(),
           },
         ]);
 
@@ -148,6 +160,26 @@ export default function CreateIssue() {
             required
             className="w-full px-3 py-2 border rounded-lg"
           />
+        </div>
+        
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="category">
+            카테고리
+          </label>
+          <select
+            id="category"
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border rounded-lg bg-white"
+          >
+            {Object.entries(categoryNames).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
         </div>
         
         <div className="mb-6">

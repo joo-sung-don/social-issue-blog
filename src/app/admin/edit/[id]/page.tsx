@@ -6,6 +6,15 @@ import { supabase } from '@/lib/supabase';
 import { use } from 'react';
 import { resizeImage, compressImageIfNeeded } from '@/lib/imageUtils';
 
+// 카테고리 한글 이름 맵핑
+const categoryNames: Record<string, string> = {
+  'economics': '경제',
+  'technology': '기술',
+  'environment': '환경',
+  'society': '사회',
+  'politics': '정치'
+};
+
 interface PageProps {
   params: {
     id: string;
@@ -28,6 +37,7 @@ export default function EditIssue({ params }: PageProps) {
     thumbnail: '',
     content: '',
     slug: '',
+    category: 'society', // 기본 카테고리 값
   });
 
   useEffect(() => {
@@ -48,6 +58,7 @@ export default function EditIssue({ params }: PageProps) {
             thumbnail: data.thumbnail,
             content: data.content || '',
             slug: data.slug,
+            category: data.category || 'society', // 기존 카테고리 값 또는 기본값
           });
           
           // 썸네일 URL이 있으면 미리보기에 표시
@@ -67,7 +78,7 @@ export default function EditIssue({ params }: PageProps) {
     fetchIssue();
   }, [id, router]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -143,6 +154,7 @@ export default function EditIssue({ params }: PageProps) {
           thumbnail: formData.thumbnail,
           content: formData.content,
           slug: slug,
+          category: formData.category, // 카테고리 업데이트
         })
         .eq('id', id);
 
@@ -198,6 +210,26 @@ export default function EditIssue({ params }: PageProps) {
             required
             className="w-full px-3 py-2 border rounded-lg"
           />
+        </div>
+        
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="category">
+            카테고리
+          </label>
+          <select
+            id="category"
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border rounded-lg bg-white"
+          >
+            {Object.entries(categoryNames).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
         </div>
         
         <div className="mb-6">

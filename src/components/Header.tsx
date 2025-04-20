@@ -27,11 +27,13 @@ export default function Header() {
 
           {/* 데스크톱 메뉴 - 중간 크기 이상에서만 표시 */}
           <div className="hidden md:flex items-center space-x-4">
+            <Link href="/about" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md">소개</Link>
+            <Link href="/" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md">전체</Link>
+            <Link href="/category/economics" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md">경제</Link>
+            <Link href="/category/technology" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md">기술</Link>
             <Link href="/category/environment" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md">환경</Link>
             <Link href="/category/society" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md">사회</Link>
             <Link href="/category/politics" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md">정치</Link>
-            <Link href="/category/economics" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md">경제</Link>
-            <Link href="/about" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md">소개</Link>
           </div>
 
           {/* 우측 기능 버튼들 */}
@@ -78,11 +80,13 @@ export default function Header() {
         {/* 모바일 메뉴 - 토글 상태에 따라 표시/숨김 */}
         {isMenuOpen && (
           <div className="md:hidden py-3 px-2 space-y-1 sm:px-3 border-t">
+            <Link href="/about" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">소개</Link>
+            <Link href="/" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">전체</Link>
+            <Link href="/category/economics" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">경제</Link>
+            <Link href="/category/technology" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">기술</Link>
             <Link href="/category/environment" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">환경</Link>
             <Link href="/category/society" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">사회</Link>
             <Link href="/category/politics" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">정치</Link>
-            <Link href="/category/economics" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">경제</Link>
-            <Link href="/about" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">소개</Link>
             
             {/* 모바일 검색 폼 */}
             <form onSubmit={handleSearch} className="pt-2">

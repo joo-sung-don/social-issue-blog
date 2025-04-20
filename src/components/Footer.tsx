@@ -78,12 +78,13 @@ export default function Footer() {
           <div className="md:col-span-1">
             <h4 className="text-gray-900 font-bold text-lg mb-4">카테고리</h4>
             <ul className="space-y-2">
+              <li><Link href="/about" className="text-gray-600 hover:text-blue-600">소개</Link></li>
+              <li><Link href="/" className="text-gray-600 hover:text-blue-600">전체</Link></li>
+              <li><Link href="/category/economics" className="text-gray-600 hover:text-blue-600">경제</Link></li>
+              <li><Link href="/category/technology" className="text-gray-600 hover:text-blue-600">기술</Link></li>
               <li><Link href="/category/environment" className="text-gray-600 hover:text-blue-600">환경</Link></li>
               <li><Link href="/category/society" className="text-gray-600 hover:text-blue-600">사회</Link></li>
               <li><Link href="/category/politics" className="text-gray-600 hover:text-blue-600">정치</Link></li>
-              <li><Link href="/category/economics" className="text-gray-600 hover:text-blue-600">경제</Link></li>
-              <li><Link href="/category/culture" className="text-gray-600 hover:text-blue-600">문화</Link></li>
-              <li><Link href="/category/tech" className="text-gray-600 hover:text-blue-600">기술</Link></li>
             </ul>
           </div>
 
