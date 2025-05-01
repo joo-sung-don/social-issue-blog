@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export interface Database {
-  public: {
+  public: { 
     Tables: {
       issues: {
         Row: {

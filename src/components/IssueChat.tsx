@@ -359,11 +359,6 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
     };
   }, [issueSlug]);
 
-  // 스크롤 자동 이동
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
   // 로컬 스토리지에서 발신자 이름 불러오기
   useEffect(() => {
     const storedName = localStorage.getItem('chat-sender-name');
@@ -385,6 +380,11 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
       return msg.stance === selectedFilter;
     });
   }, [messages, selectedFilter]);
+
+  // 스크롤 자동 이동
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [filteredMessages]);
 
   // 입장별 메시지 수 계산
   const stanceCount = useMemo(() => {

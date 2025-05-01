@@ -134,21 +134,17 @@ export default function IssuePage({ params }: PageProps) {
   return (
     <main className="container mx-auto px-4 py-8">
       <article className="max-w-4xl mx-auto">
-        <div className="relative w-full h-[400px] mb-8">
+        <div className="w-full mb-8">
           <img
             src={issue.thumbnail}
             alt={issue.title}
-            className="object-cover w-full h-full rounded-lg"
+            className="object-contain w-full rounded-lg"
           />
         </div>
         <h1 className="text-4xl font-bold mb-4">{issue.title}</h1>
         <p className="text-gray-500 mb-8">{issue.date}</p>
         <div className="prose prose-lg max-w-none">
-          {issue.content?.split('\n').map((paragraph, index) => (
-            <p key={index} className="mb-4">
-              {paragraph.trim()}
-            </p>
-          ))}
+          <div dangerouslySetInnerHTML={{ __html: issue.content || '' }} />
         </div>
         <div className="mt-8 mb-12">
           <a href="/" className="text-blue-600 hover:underline">← 메인 페이지로 돌아가기</a>

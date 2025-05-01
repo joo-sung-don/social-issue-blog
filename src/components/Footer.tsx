@@ -1,46 +1,11 @@
 "use client";
 
 import Link from 'next/link';
-import { useState } from 'react';
 
 export default function Footer() {
-  const [email, setEmail] = useState('');
-  
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    // 뉴스레터 구독 기능 구현 (추후 추가)
-    console.log('구독 이메일:', email);
-    alert('뉴스레터 구독이 완료되었습니다!');
-    setEmail('');
-  };
-
   return (
     <footer className="bg-gray-50 border-t border-gray-200">
       <div className="max-w-7xl mx-auto pt-12 px-4 sm:px-6 lg:px-8">
-        {/* 뉴스레터 구독 섹션 */}
-        <div className="pb-8 mb-8 border-b border-gray-200">
-          <div className="max-w-3xl mx-auto text-center">
-            <h3 className="text-xl font-bold text-gray-900 mb-3">소셜 이슈 뉴스레터 구독하기</h3>
-            <p className="text-gray-600 mb-5">최신 소셜 이슈와 분석 정보를 정기적으로 받아보세요.</p>
-            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 justify-center">
-              <input
-                type="email"
-                required
-                placeholder="이메일 주소 입력"
-                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[250px]"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button 
-                type="submit"
-                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                구독하기
-              </button>
-            </form>
-          </div>
-        </div>
-
         {/* 푸터 메인 콘텐츠 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* 사이트 소개 */}
