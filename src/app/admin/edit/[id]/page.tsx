@@ -11,6 +11,7 @@ import Color from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
 import { resizeImage, compressImageIfNeeded } from '@/lib/imageUtils';
+import { use } from 'react';
 
 const categoryNames: Record<string, string> = {
   'economics': '경제',
@@ -27,6 +28,7 @@ interface PageProps {
 }
 
 export default function EditIssue({ params }: PageProps) {
+  const unwrappedParams = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -70,10 +72,10 @@ export default function EditIssue({ params }: PageProps) {
   useEffect(() => {
     const fetchIssue = async () => {
       try {
-        console.log('조회 시도 ID:', params.id, typeof params.id);
+        console.log('조회 시도 ID:', unwrappedParams.id, typeof unwrappedParams.id);
         
         // ID가 유효한 숫자인지 확인
-        const issueId = parseInt(params.id);
+        const issueId = parseInt(unwrappedParams.id);
         if (isNaN(issueId)) {
           throw new Error('유효하지 않은 ID입니다');
         }
@@ -113,7 +115,7 @@ export default function EditIssue({ params }: PageProps) {
     };
 
     fetchIssue();
-  }, [params.id, router, editor]);
+  }, [unwrappedParams.id, router, editor]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -172,10 +174,10 @@ export default function EditIssue({ params }: PageProps) {
     setSaving(true);
 
     try {
-      console.log('수정 시도 중...', params.id, formData);
+      console.log('수정 시도 중...', unwrappedParams.id, formData);
       
       // ID가 유효한 숫자인지 확인
-      const issueId = parseInt(params.id);
+      const issueId = parseInt(unwrappedParams.id);
       if (isNaN(issueId)) {
         throw new Error('유효하지 않은 ID입니다');
       }
