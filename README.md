@@ -69,6 +69,35 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 3. 업로드된 이미지는 자동으로 미리보기에 표시됨
 4. 게시글 저장 시 업로드된 이미지의 URL이 함께 저장됨
 
+## 배포 방법
+
+### Vercel을 통한 배포
+
+1. [Vercel](https://vercel.com)에 가입하고 로그인합니다.
+2. "New Project" 버튼을 클릭합니다.
+3. GitHub 저장소를 연결하고 이 프로젝트를 선택합니다.
+4. 환경 변수 설정:
+   - `NEXT_PUBLIC_SUPABASE_URL`: Supabase 프로젝트 URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase 익명 키
+5. "Deploy" 버튼을 클릭하여 배포를 시작합니다.
+
+### 수동 배포 (다른 호스팅 서비스 사용 시)
+
+1. 프로젝트 빌드:
+   ```bash
+   npm run build
+   ```
+2. 정적 파일 생성:
+   ```bash
+   npm run start
+   ```
+3. `.next` 폴더, `public` 폴더, 그리고 `package.json` 파일을 호스팅 서비스에 업로드합니다.
+4. 환경 변수 설정:
+   - `NEXT_PUBLIC_SUPABASE_URL`: Supabase 프로젝트 URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase 익명 키
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

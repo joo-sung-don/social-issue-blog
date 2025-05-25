@@ -7,10 +7,11 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
 import Color from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
-import Image from 'next/image';
+import NextImage from 'next/image';
 import { resizeImage, compressImageIfNeeded } from '@/lib/imageUtils';
 
 const categoryNames: Record<string, string> = {
@@ -18,7 +19,8 @@ const categoryNames: Record<string, string> = {
   'technology': '기술',
   'environment': '환경',
   'society': '사회',
-  'politics': '정치'
+  'politics': '정치',
+  'statistics': '통계'
 };
 
 export default function CreateIssue() {
@@ -34,6 +36,8 @@ export default function CreateIssue() {
     category: 'society',
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [statsImageUrl, setStatsImageUrl] = useState('');
 
   const [content, setContent] = useState('');
 
@@ -48,6 +52,10 @@ export default function CreateIssue() {
       TextStyle,
       Placeholder.configure({
         placeholder: '내용을 입력하세요...',
+      }),
+      Image.configure({
+        inline: false,
+        allowBase64: true,
       }),
     ],
     content: '',
@@ -147,6 +155,14 @@ export default function CreateIssue() {
       alert('게시글 생성 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStatsImageInsert = () => {
+    if (statsImageUrl && editor) {
+      editor.chain().focus().insertContent(`<img src="${statsImageUrl}" alt="통계 차트" />`).run();
+      setStatsImageUrl('');
+      setShowStatsModal(false);
     }
   };
 
@@ -400,6 +416,31 @@ export default function CreateIssue() {
                 
                 <span className="mx-1 border-l h-6 border-gray-300"></span>
                 
+                <button 
+                  type="button"
+                  onClick={() => setShowStatsModal(true)}
+                  className={menuButtonClass}
+                  title="통계 차트 삽입"
+                >
+                  📊 통계 차트
+                </button>
+                
+                <button 
+                  type="button"
+                  onClick={() => {
+                    const url = prompt('이미지 URL을 입력하세요:');
+                    if (url) {
+                      editor.chain().focus().insertContent(`<img src="${url}" alt="삽입된 이미지" />`).run();
+                    }
+                  }}
+                  className={menuButtonClass}
+                  title="이미지 추가"
+                >
+                  🖼️ 이미지
+                </button>
+                
+                <span className="mx-1 border-l h-6 border-gray-300"></span>
+                
                 <div className="flex items-center">
                   <label className="mr-1 text-sm">색상:</label>
                   <input
@@ -438,6 +479,112 @@ export default function CreateIssue() {
           </button>
         </div>
       </form>
+      
+      {showStatsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">통계 차트 삽입</h3>
+            
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                이미지 URL
+              </label>
+              <input
+                type="text"
+                value={statsImageUrl}
+                onChange={(e) => setStatsImageUrl(e.target.value)}
+                placeholder="https://example.com/chart.png"
+                className="w-full px-3 py-2 border rounded-lg"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                차트 이미지 URL을 직접 입력하거나 통계 사이트에서 가져오세요.
+              </p>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                또는 파일 업로드
+              </label>
+              <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-50 transition">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={async (e) => {
+                    const files = e.target.files;
+                    if (!files || files.length === 0) return;
+                    
+                    const originalFile = files[0];
+                    setUploadLoading(true);
+                    
+                    try {
+                      const compressedFile = await compressImageIfNeeded(originalFile, 2);
+                      const fileExt = compressedFile.name.split('.').pop();
+                      const fileName = `stats-${Date.now()}.${fileExt}`;
+                      const filePath = `stats-images/${fileName}`;
+
+                      const { data, error } = await supabase.storage
+                        .from('issue-images')
+                        .upload(filePath, compressedFile);
+
+                      if (error) throw error;
+
+                      const { data: publicUrlData } = supabase.storage
+                        .from('issue-images')
+                        .getPublicUrl(filePath);
+
+                      setStatsImageUrl(publicUrlData.publicUrl);
+                    } catch (error: any) {
+                      console.error('Error uploading stats image:', error.message);
+                      alert('통계 이미지 업로드 중 오류가 발생했습니다.');
+                    } finally {
+                      setUploadLoading(false);
+                    }
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="text-center py-2">
+                  <p className="text-sm text-gray-500">
+                    {uploadLoading ? "업로드 중..." : "클릭하여 차트 이미지 업로드"}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {statsImageUrl && (
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  미리보기
+                </label>
+                <div className="border rounded p-2">
+                  <img 
+                    src={statsImageUrl} 
+                    alt="통계 차트 미리보기" 
+                    className="max-w-full h-auto"
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={() => setShowStatsModal(false)}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleStatsImageInsert}
+                disabled={!statsImageUrl}
+                className={`px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 ${!statsImageUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                삽입
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

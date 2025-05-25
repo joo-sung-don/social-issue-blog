@@ -11,7 +11,8 @@ const categoryMappings: Record<string, string> = {
   'technology': '기술',
   'environment': '환경',
   'society': '사회',
-  'politics': '정치'
+  'politics': '정치',
+  'statistics': '통계'
 };
 
 // 카테고리 타이틀 이미지 맵핑
@@ -20,7 +21,8 @@ const categoryImages: Record<string, string> = {
   'technology': 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&h=400&q=80',
   'environment': 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&h=400&q=80',
   'society': 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&h=400&q=80',
-  'politics': 'https://images.unsplash.com/photo-1575320181282-9afab399332c?auto=format&fit=crop&w=1200&h=400&q=80'
+  'politics': 'https://images.unsplash.com/photo-1575320181282-9afab399332c?auto=format&fit=crop&w=1200&h=400&q=80',
+  'statistics': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&h=400&q=80'
 };
 
 // 페이지 컴포넌트
