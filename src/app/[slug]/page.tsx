@@ -17,15 +17,16 @@ interface Issue {
   slug: string;
 }
 
+// Next.js 15 Promise 타입으로 변경
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default function IssuePage({ params }: PageProps) {
   // params를 React.use()로 unwrap
-  const unwrappedParams = use(params as any) as { slug: string };
+  const unwrappedParams = use(params);
   // URL 디코딩을 추가
   const slug = decodeURIComponent(unwrappedParams.slug);
 
