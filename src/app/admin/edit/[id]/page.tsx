@@ -21,14 +21,15 @@ const categoryNames: Record<string, string> = {
   'politics': '정치'
 };
 
+// Next.js 15 Promise 기반 params 타입으로 수정
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditIssue({ params }: PageProps) {
-  const unwrappedParams = use(params);
+  const unwrappedParams = use(params) as { id: string };
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

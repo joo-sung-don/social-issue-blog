@@ -25,7 +25,7 @@ const categoryImages: Record<string, string> = {
   'statistics': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&h=400&q=80'
 };
 
-// Next.js 15 async 컴포넌트 타입 수정
+// 페이지 컴포넌트 - Next.js 15 Promise 기반 params로 수정
 export default async function CategoryPage(props: { params: Promise<{ category: string }> }) {
   const params = await props.params;
   const { category } = params;

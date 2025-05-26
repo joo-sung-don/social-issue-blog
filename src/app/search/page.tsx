@@ -1,31 +1,43 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { highlightText } from '@/lib/highlights';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from 'next/link';
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-// 카테고리 배지 색상 맵핑
-const categoryColors: Record<string, { bg: string, text: string }> = {
-  'economics': { bg: 'bg-green-100', text: 'text-green-800' },
-  'technology': { bg: 'bg-teal-100', text: 'text-teal-800' },
-  'environment': { bg: 'bg-emerald-100', text: 'text-emerald-800' },
-  'society': { bg: 'bg-purple-100', text: 'text-purple-800' },
-  'politics': { bg: 'bg-red-100', text: 'text-red-800' }
+// 카테고리별 색상 매핑
+const categoryColors: Record<string, { bg: string; text: string }> = {
+  'economics': { bg: 'bg-blue-100', text: 'text-blue-800' },
+  'technology': { bg: 'bg-purple-100', text: 'text-purple-800' },
+  'environment': { bg: 'bg-green-100', text: 'text-green-800' },
+  'society': { bg: 'bg-orange-100', text: 'text-orange-800' },
+  'politics': { bg: 'bg-red-100', text: 'text-red-800' },
+  'statistics': { bg: 'bg-indigo-100', text: 'text-indigo-800' }
 };
 
-// 카테고리 한글 이름 맵핑
+// 카테고리명 매핑
 const categoryNames: Record<string, string> = {
   'economics': '경제',
   'technology': '기술',
   'environment': '환경',
   'society': '사회',
-  'politics': '정치'
+  'politics': '정치',
+  'statistics': '통계'
+};
+
+// 검색어 하이라이트 함수
+const highlightText = (text: string, query: string) => {
+  if (!query || !text) return text;
+  const parts = text.split(new RegExp(`(${query})`, 'gi'));
+  return parts.map((part, index) => 
+    part.toLowerCase() === query.toLowerCase() 
+      ? <mark key={index} className="bg-yellow-200 px-1 rounded">{part}</mark> 
+      : part
+  );
 };
 
 interface Issue {
@@ -39,7 +51,7 @@ interface Issue {
   created_at?: string;
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   
@@ -238,5 +250,13 @@ export default function SearchPage() {
         <NoResults />
       )}
     </main>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 } 
