@@ -5,6 +5,10 @@ import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
+// Next.js 15 동적 렌더링 강제 설정
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // 카테고리 배지 색상 맵핑
 const categoryColors: Record<string, { bg: string, text: string }> = {
   'economics': { bg: 'bg-green-100', text: 'text-green-800' },
@@ -35,7 +39,7 @@ interface Issue {
 }
 
 export default async function Home() {
-  // Supabase에서 모든 게시글 가져오기
+  // Supabase에서 모든 게시글 가져오기 (캐시 없이)
   const { data: issues, error } = await supabase
     .from('issues')
     .select('*')

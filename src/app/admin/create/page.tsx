@@ -149,7 +149,11 @@ export default function CreateIssue() {
 
       if (error) throw error;
       
-      router.push('/admin');
+      alert('게시글이 성공적으로 작성되었습니다!');
+      // 메인페이지로 리다이렉트하여 새 글이 바로 보이도록 함
+      router.push('/');
+      // 페이지 새로고침으로 캐시 무효화
+      router.refresh();
     } catch (error: any) {
       console.error('Error creating issue:', error.message);
       alert('게시글 생성 중 오류가 발생했습니다.');
