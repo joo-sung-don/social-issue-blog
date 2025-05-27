@@ -324,11 +324,9 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
 
     fetchMessages();
 
-    // 실시간 구독 - 단순화된 버전
-    console.log('Setting up realtime subscription for:', issueSlug);
-    
+    // 실시간 구독
     const channel = supabase
-      .channel('public:chat_messages')
+      .channel(`chat-${issueSlug}`)
       .on(
         'postgres_changes',
         {
@@ -338,29 +336,13 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
           filter: `issue_slug=eq.${issueSlug}`
         },
         (payload) => {
-          console.log('✅ Realtime message received:', payload);
           const newMessage = payload.new as ChatMessage;
-          
-          setMessages((currentMessages) => {
-            console.log('Current messages count:', currentMessages.length);
-            console.log('Adding new message:', newMessage);
-            const updated = [...currentMessages, newMessage];
-            console.log('Updated messages count:', updated.length);
-            return updated;
-          });
+          setMessages((currentMessages) => [...currentMessages, newMessage]);
         }
       )
-      .subscribe((status) => {
-        console.log('🔄 Subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to realtime updates');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Channel subscription error');
-        }
-      });
+      .subscribe();
 
     return () => {
-      console.log('🔄 Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [issueSlug]);
@@ -563,15 +545,8 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
         return;
       }
 
-      // 실시간 이벤트 전에 UI 업데이트를 위해 직접 추가
-      if (data && data.length > 0) {
-        // 서버 응답에 stance가 없으면 클라이언트에서 추가
-        const newMessage = data[0] as ChatMessage;
-        if (!newMessage.stance && userStance) {
-          newMessage.stance = userStance;
-        }
-        setMessages((prev) => [...prev, newMessage]);
-      }
+      // 실시간 구독이 처리하므로 직접 상태 업데이트 제거
+      // (Realtime이 활성화되어 있으면 INSERT 이벤트로 자동 추가됨)
 
       setNewMessage('');
     } catch (err) {

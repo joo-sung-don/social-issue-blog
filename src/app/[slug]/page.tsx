@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase';
 import { issues as fallbackIssues } from '@/data/issues';
 import { use } from 'react';
 import IssueChat from '@/components/IssueChat';
-import SimpleChat from '@/components/SimpleChat';
 
 interface Issue {
   id: number;
@@ -152,13 +151,7 @@ export default function IssuePage({ params }: PageProps) {
           <a href="/" className="text-blue-600 hover:underline">← 메인 페이지로 돌아가기</a>
         </div>
         
-        {/* 실시간 채팅 테스트 */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">실시간 채팅 테스트</h2>
-          <SimpleChat issueSlug={slug} />
-        </div>
-        
-        {/* 기존 실시간 채팅 섹션 */}
+        {/* 실시간 채팅 섹션 */}
         <IssueChat issueSlug={slug} />
       </article>
     </main>
