@@ -56,6 +56,14 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
   const [userStance, setUserStance] = useState<Stance>(null);
   const [selectedFilter, setSelectedFilter] = useState<Stance | 'all'>('all');
   
+  // 닉네임 중복 체크
+  const [isCheckingNickname, setIsCheckingNickname] = useState(false);
+  const [nicknameValidation, setNicknameValidation] = useState<{
+    isValid: boolean;
+    message: string;
+    isChecked: boolean;
+  }>({ isValid: false, message: '', isChecked: false });
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // IP 주소 가져오기 및 차단 상태 확인
@@ -233,6 +241,76 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
     return SPAM_PATTERN.test(message);
   };
 
+  // 닉네임 중복 체크 함수
+  const checkNicknameDuplicate = async (nickname: string) => {
+    if (!nickname.trim() || nickname.trim().length < 2) {
+      setNicknameValidation({
+        isValid: false,
+        message: '닉네임은 최소 2글자 이상 입력해주세요.',
+        isChecked: false
+      });
+      return;
+    }
+
+    setIsCheckingNickname(true);
+    setNicknameValidation({
+      isValid: false,
+      message: '닉네임 중복 확인 중...',
+      isChecked: false
+    });
+
+    try {
+      // 현재 이슈에서 최근 10분 내에 같은 닉네임을 사용한 메시지가 있는지 확인
+      const tenMinutesAgo = new Date();
+      tenMinutesAgo.setMinutes(tenMinutesAgo.getMinutes() - 10);
+
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('sender_name, created_at')
+        .eq('issue_slug', issueSlug)
+        .eq('sender_name', nickname.trim())
+        .gte('created_at', tenMinutesAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('닉네임 중복 체크 오류:', error);
+        setNicknameValidation({
+          isValid: true,
+          message: '중복 체크 실패. 계속 진행합니다.',
+          isChecked: true
+        });
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const lastUsed = new Date(data[0].created_at);
+        const minutesAgo = Math.floor((new Date().getTime() - lastUsed.getTime()) / (1000 * 60));
+        
+        setNicknameValidation({
+          isValid: false,
+          message: `이 닉네임은 ${minutesAgo}분 전에 사용되었습니다. 다른 닉네임을 사용해주세요.`,
+          isChecked: true
+        });
+      } else {
+        setNicknameValidation({
+          isValid: true,
+          message: '사용 가능한 닉네임입니다.',
+          isChecked: true
+        });
+      }
+    } catch (err) {
+      console.error('닉네임 체크 중 오류:', err);
+      setNicknameValidation({
+        isValid: true,
+        message: '중복 체크 실패. 계속 진행합니다.',
+        isChecked: true
+      });
+    } finally {
+      setIsCheckingNickname(false);
+    }
+  };
+
   // 채팅 규칙 위반 검사
   const checkForChatViolation = (message: string): { isValid: boolean; reason: string } => {
     // 이미 차단 중인 경우
@@ -406,8 +484,24 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
       return;
     }
     
+    if (senderName.trim().length < 2) {
+      setError('닉네임은 최소 2글자 이상 입력해 주세요.');
+      return;
+    }
+    
+    if (senderName.trim().length > 20) {
+      setError('닉네임은 최대 20글자까지 입력 가능합니다.');
+      return;
+    }
+    
     if (!userStance) {
       setError('입장(찬성/반대/중립)을 선택해 주세요.');
+      return;
+    }
+
+    // 닉네임 중복 체크 (체크되지 않았거나 유효하지 않은 경우)
+    if (!nicknameValidation.isChecked || !nicknameValidation.isValid) {
+      setError('닉네임 중복 확인이 필요합니다. 닉네임 옆의 확인 버튼을 클릭해주세요.');
       return;
     }
     
@@ -753,23 +847,76 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
         </Card>
       ) : (
         <form onSubmit={handleSendMessage} className="space-y-4">
-          {!senderName && (
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="닉네임을 입력하세요"
-                value={senderName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSenderName(e.target.value)}
-                className="w-full pl-10 h-11 bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                maxLength={20}
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
+          {/* 닉네임 입력 필드 - 항상 표시하되 수정 가능 */}
+          <div className="space-y-2">
+            <div className="relative flex space-x-2">
+              <div className="relative flex-1">
+                <Input
+                  type="text"
+                  placeholder="닉네임을 입력하세요 (최소 2글자)"
+                  value={senderName}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setSenderName(e.target.value);
+                    // 닉네임이 변경되면 검증 상태 초기화
+                    setNicknameValidation({ isValid: false, message: '', isChecked: false });
+                  }}
+                  className="w-full pl-10 pr-16 h-11 bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  maxLength={20}
+                  minLength={2}
+                  required
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center space-x-2">
+                  {senderName && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSenderName('');
+                        setNicknameValidation({ isValid: false, message: '', isChecked: false });
+                      }}
+                      className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      title="닉네임 지우기"
+                    >
+                      ✕
+                    </button>
+                  )}
+                  <span className="text-xs text-gray-400">
+                    {senderName.length}/20
+                  </span>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => checkNicknameDuplicate(senderName)}
+                disabled={isCheckingNickname || !senderName.trim() || senderName.trim().length < 2}
+                className="px-4 h-11 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isCheckingNickname ? '확인중...' : '중복확인'}
+              </button>
             </div>
-          )}
+            
+            {/* 닉네임 검증 상태 표시 */}
+            {nicknameValidation.message && (
+              <div className={`text-xs px-3 py-2 rounded-lg ${
+                nicknameValidation.isValid 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                <div className="flex items-center space-x-2">
+                  {nicknameValidation.isValid ? (
+                    <span>✅</span>
+                  ) : (
+                    <span>❌</span>
+                  )}
+                  <span>{nicknameValidation.message}</span>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* 입장 선택 버튼 그룹 */}
           <div className="flex items-center space-x-2 my-3">
@@ -810,13 +957,13 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
                 value={newMessage}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMessage(e.target.value)}
                 className="w-full pl-4 pr-10 h-12 bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                disabled={isLoading || !senderName || !userStance}
+                disabled={isLoading || !senderName.trim() || senderName.trim().length < 2 || !nicknameValidation.isValid || !userStance}
                 maxLength={300}
               />
             </div>
             <Button 
               type="submit" 
-              disabled={isLoading || !senderName || !userStance || !newMessage.trim()}
+              disabled={isLoading || !senderName.trim() || senderName.trim().length < 2 || !nicknameValidation.isValid || !userStance || !newMessage.trim()}
               className="h-12 px-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-indigo-500 disabled:hover:to-purple-600"
             >
               {isLoading ? (
