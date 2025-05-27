@@ -315,6 +315,7 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
           return;
         }
 
+        console.log('Fetched messages:', data?.length || 0);
         setMessages(data || []);
       } catch (err) {
         console.error('Failed to fetch messages:', err);
@@ -323,10 +324,11 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
 
     fetchMessages();
 
-    // 실시간 구독 - 채널 이름에 issueSlug 포함시켜 구체적으로 설정
-    const channelName = `chat_messages_${issueSlug}`;
-    const channel: RealtimeChannel = supabase
-      .channel(channelName)
+    // 실시간 구독 - 단순화된 버전
+    console.log('Setting up realtime subscription for:', issueSlug);
+    
+    const channel = supabase
+      .channel('public:chat_messages')
       .on(
         'postgres_changes',
         {
@@ -335,26 +337,30 @@ export default function IssueChat({ issueSlug }: IssueChatProps) {
           table: 'chat_messages',
           filter: `issue_slug=eq.${issueSlug}`
         },
-        (payload: RealtimePostgresChangesPayload<{
-          id: string;
-          issue_slug: string;
-          sender_name: string;
-          message: string;
-          created_at: string;
-          is_system_message?: boolean;
-          ip_address?: string;
-        }>) => {
-          console.log('Real-time message received:', payload);
+        (payload) => {
+          console.log('✅ Realtime message received:', payload);
           const newMessage = payload.new as ChatMessage;
-          setMessages((prev) => [...prev, newMessage]);
+          
+          setMessages((currentMessages) => {
+            console.log('Current messages count:', currentMessages.length);
+            console.log('Adding new message:', newMessage);
+            const updated = [...currentMessages, newMessage];
+            console.log('Updated messages count:', updated.length);
+            return updated;
+          });
         }
       )
-      .subscribe((status: string) => {
-        console.log(`Subscription status for ${channelName}:`, status);
+      .subscribe((status) => {
+        console.log('🔄 Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to realtime updates');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Channel subscription error');
+        }
       });
 
     return () => {
-      console.log(`Unsubscribing from channel: ${channelName}`);
+      console.log('🔄 Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [issueSlug]);

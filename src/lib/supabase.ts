@@ -13,14 +13,20 @@ try {
   validUrl = 'https://afppkxoactqarlnnhdpa.supabase.co';
 }
 
-console.log('Supabase URL:', validUrl);
-console.log('Supabase Key exists:', !!supabaseAnonKey);
+console.log('🔧 Supabase Configuration:');
+console.log('📍 URL:', validUrl);
+console.log('🔑 Key exists:', !!supabaseAnonKey);
 
-// Supabase 클라이언트 생성
+// Supabase 클라이언트 생성 - 실시간 최적화
 export const supabase = createClient(validUrl, supabaseAnonKey, {
   realtime: {
     params: {
-      eventsPerSecond: 10
-    }
-  }
+      eventsPerSecond: 50,  // 이벤트 처리 속도 증가
+    },
+    heartbeatIntervalMs: 30000,  // 30초마다 heartbeat
+    reconnectAfterMs: (tries: number) => Math.min(tries * 1000, 30000),  // 재연결 지연시간
+  },
+  auth: {
+    persistSession: false,  // 채팅에서는 세션 유지 불필요
+  },
 }); 
